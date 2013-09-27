@@ -42,7 +42,7 @@ describe "Ajax", ->
         "X-Requested-With": "XMLHttpRequest"
 
       dataType: "json"
-      url: "/users"
+      url: '/sobjects?soql=select first__c,last__c,Id  from User__c '
       processData: false
 
 
