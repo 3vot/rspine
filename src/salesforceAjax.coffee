@@ -142,7 +142,7 @@ class Collection extends Base
     if options.query
       @query(params, options)
         
-    if id = params.id
+    else if id = params.id
       delete params.id
       @find(id, params, options).done (record) =>
         @model.refresh(record, options)

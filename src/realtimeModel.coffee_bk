@@ -1,0 +1,37 @@
+RSpine = require('rspine')
+RSpine.realtimeModels = [] if !RSpine.realtimeModels
+
+RSpine.Model.RealtimeModel =
+
+  initialize: ->
+
+  decorate: (klassOrKlasses) ->
+    RSpine.bind "plataform:pusher_loaded" , =>
+      klassOrKlasses = [klassOrKlasses] if Object::toString.call(klassOrKlasses) is not '[object Array]'
+      @performDecoration(klass) for klass in klassOrKlasses
+  
+  performDecoration: (klass) =>
+      klass.extend RSpine.Model.RealtimeModel
+      klass.registerInServer(klass)
+
+  extended: ->
+    RSpine.realtimeModels.push @
+    
+    @extend
+      registerInServer: (klass) =>
+        RSpine.managers.realtimeManager.bind "salesforce-realtime-push" , "#{klass.className}__c" , (message) =>
+          @updateFromSocket(message)
+
+      updateFromSocket: (message) =>
+        delete object.attributes for object in message.sobjects
+        data = message.sobjects || message.objects || message.object
+        results = JSON.stringify data
+        @refresh(results)
+        @afterSocketUpdate(message,results)
+        @trigger "pushSuccess"
+        return results
+
+      afterSocketUpdate: (message,results) =>
+        return true
+
+module?.exports = RSpine.Model.RealtimeModel
