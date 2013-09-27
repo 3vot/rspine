@@ -1,0 +1,54 @@
+{
+  "name": "rspine",
+  "description": "MVC Framework for R2 Platform based on RSpineJS",
+  "version": "0.0.3",
+  "author": {
+    "name": "rodriguezartav"
+  },
+  "keywords": [
+    "rspine",
+    "coffeescript",
+    "MVC",
+    "Rw"
+  ],
+  "contributors": [
+    {
+      "name": "rodriguezartav"
+    }
+  ],
+  "dependencies": {
+    "mocha": "*",
+    "should": "*",
+    "grunt": "~0.4.1",
+    "grunt-contrib-jshint": "~0.6.0",
+    "grunt-contrib-clean": "~0.4.0",
+    "grunt-contrib-nodeunit": "~0.2.0",
+    "grunt-contrib-coffee": "~0.7.0",
+    "grunt-contrib-watch": "~0.5.1",
+    "grunt-mocha-test": "~0.6.2"
+  },
+  "devDependencies": {
+    "grunt-contrib-jasmine": "~0.5.2"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/spine/spine/blob/master/LICENSE"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/rodriguezartav/spine4r2.git"
+  },
+  "main": "./index.js",
+  "scripts": {
+    "test": "for i in test/*.html; do phantomjs test/lib/run-jasmine.phantom.js file://`pwd`/$i; done"
+  },
+  "readme": "# RRSpine\n\n[![Build Status](https://secure.travis-ci.org/maccman/spine.png)](http://travis-ci.org/maccman/spine)\n\nRSpine is a lightweight framework for building JavaScript web applications. RSpine gives you an MVC structure and then gets out of your way, allowing you to concentrate on the fun stuff, building awesome web applications.\n\nRSpine is opinionated in its approach to web application architecture and design. RSpine's architecture complements patterns such as de-coupled components and CommonJS modules, markedly helping with code quality and maintainability.\n\nThe library is written in [CoffeeScript](http://jashkenas.github.com/coffee-script), but doesn't necessarily require CoffeeScript to develop applications - you can use whichever language you're most familiar with.\n\nRSpine is tiny, the core library comes in at around 600 lines of CoffeeScript code that is written in such a way as not to sacrifice readability. Being lightweight and simple is fundamental to RSpine.\n\nFor documentation, usage, and examples, see: [spinejs.com](http://spinejs.com)\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/rodriguezartav/spine4r2/issues"
+  },
+  "_id": "rspine@0.0.2",
+  "_from": "rspine@latest"
+}
