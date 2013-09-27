@@ -40,12 +40,12 @@ module.exports = (grunt) ->
           vendor: "./test/lib/jquery.js"
         
       salesforceModel:
-        src: ["./lib/rspine.js"  ,"./lib/salesforceModel.js","./lib/salesforceAjax.js"]
+        src: ["./lib/rspine.js"  ,"./lib/salesforceModel.js","./lib/salesforceAjax.js","./lib/offlineModel.js"]
         options: 
-          specs: ['./test/specs/salesforceModel.js', './test/specs/salesforceAjax.js']
+          specs: ['./test/specs/salesforceModel.js', './test/specs/salesforceAjax.js', './test/specs/offlineModel.js']
           vendor: "./test/lib/jquery.js"
 
-        
+         
         
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-clean');
@@ -56,7 +56,7 @@ module.exports = (grunt) ->
 
   grunt.registerTask('test_sf', ['clean','coffee','jasmine:salesforceModel']);   
 
-  grunt.registerTask("develop", ["watch"] )
+  grunt.registerTask("server", ["watch"] )
 
 
   grunt.registerTask('testing', ["watch"]);   

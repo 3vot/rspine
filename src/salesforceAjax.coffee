@@ -134,11 +134,13 @@ class Collection extends Base
        url:  Model.salesforceHost  + "/sobjects?soql=#{queryString}"
      ).done(@recordsResponse)
       .fail(@failResponse)
+      .done (records) ->
+        @model.trigger "querySuccess"
+        @model.refresh(records, options)
 
   fetch: (params = {}, options = {}) ->
     if options.query
-      @query(params, options).done (records) =>
-        @model.refresh(records, options)
+      @query(params, options)
         
     if id = params.id
       delete params.id
