@@ -63,6 +63,10 @@ class Base
   defaults:
     dataType: 'json'
     processData: false
+    xhrFields: {
+        withCredentials: true
+    },
+    crossDomain: true
     headers: {'X-Requested-With': 'XMLHttpRequest'}
 
   queue: Ajax.queue
@@ -134,7 +138,7 @@ class Collection extends Base
        url:  Model.salesforceHost  + "/sobjects?soql=#{queryString}"
      ).done(@recordsResponse)
       .fail(@failResponse)
-      .done (records) ->
+      .done (records) =>
         @model.trigger "querySuccess"
         @model.refresh(records, options)
 
@@ -156,6 +160,9 @@ class Collection extends Base
     @model.trigger('ajaxSuccess', null, status, xhr)
 
   failResponse: (xhr, statusText, error) =>
+    RSpine.trigger("platform:login_invalid") if xhr.status==503
+
+    
     @model.trigger('ajaxError', null, xhr, statusText, error)
 
 class Singleton extends Base
@@ -268,5 +275,5 @@ Ajax.defaults   = Base::defaults
 Ajax.Base       = Base
 Ajax.Singleton  = Singleton
 Ajax.Collection = Collection
-RSpine.Ajax      = Ajax
+RSpine.SalesforceAjax = Ajax
 module?.exports = Ajax
