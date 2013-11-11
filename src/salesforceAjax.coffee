@@ -130,23 +130,31 @@ class Collection extends Base
     ).done(@recordsResponse)
      .fail(@failResponse)
 
-   query: (params , options) ->
-     queryString = @model.getQuery(params,options)
-     @ajax(
-       params,
-       type: 'GET',
-       url:  Model.salesforceHost  + "/sobjects?soql=#{queryString}"
-     ).done(@recordsResponse)
-      .fail(@failResponse)
-      .done (records) =>
-        @model.trigger "querySuccess"
-        @model.refresh(records, options)
+  query: (params={} , options={}) ->
+   queryString = if options.queryString then options.queryString else @model.getQuery(params,options)
+   @ajax(
+     params,
+     type: 'GET',
+     url:  Model.salesforceHost  + "/sobjects?soql=#{queryString}"
+   ).done(@recordsResponse)
+    .fail(@failResponse)
+    .done (records) =>
+      @model.trigger "querySuccess"
+      @model.refresh(records, options)
+
+  api: (params ={}, options={}) ->
+    @ajax(
+      params,
+      type: 'GET',
+      url:  Model.salesforceHost + "/api?path=" + options.endpoint
+    ).done(@recordsResponse)
+     .fail(@failResponse)
+     .done (results) =>
+       @model.trigger "apiSuccess", results
+
 
   fetch: (params = {}, options = {}) ->
-    if options.query
-      @query(params, options)
-        
-    else if id = params.id
+    if id = params.id
       delete params.id
       @find(id, params, options).done (record) =>
         @model.refresh(record, options)
@@ -161,8 +169,7 @@ class Collection extends Base
 
   failResponse: (xhr, statusText, error) =>
     RSpine.trigger("platform:login_invalid") if xhr.status==503
-
-    
+  
     @model.trigger('ajaxError', null, xhr, statusText, error)
 
 class Singleton extends Base
@@ -249,9 +256,16 @@ Extend =
   url: (args...) ->
     Ajax.generateURL(@, args...)
 
-Model.Ajax =
+Model.SalesforceAjax =
   extended: ->
     @fetch @ajaxFetch
+
+    @query= =>
+      @ajax().query(arguments...)
+
+    @api= =>
+      @ajax().api(arguments...)
+
     @change @ajaxChange
     @extend Extend
     @include Include
