@@ -109,6 +109,19 @@ class Base
 class Collection extends Base
   constructor: (@model) ->
 
+  custom: (params ={}, options={}) ->
+    $.ajax(
+      type: options.method
+      processData: false
+      dataType: "json"
+      contentType: "application/json"
+      url: options.url || Ajax.getURL(this.model)
+      data: params
+    ).done(@recordsResponse)
+     .fail(@failResponse)
+     .done (results) =>
+       @model.trigger "customSuccess", results
+
   find: (id, params, options = {}) ->
     record = new @model(id: id)
     @ajaxQueue(
@@ -228,7 +241,10 @@ Extend =
 Model.Ajax =
   extended: ->
     @fetch @ajaxFetch
-    @change @ajaxChange
+
+    @custom= =>
+      @ajax().custom(arguments...)
+
     @extend Extend
     @include Include
 
@@ -236,6 +252,12 @@ Model.Ajax =
 
   ajaxFetch: ->
     @ajax().fetch(arguments...)
+
+Model.Ajax.Auto =
+  extended: ->
+    @change @ajaxChange
+
+  # Private
 
   ajaxChange: (record, type, options = {}) ->
     return if options.ajax is false
