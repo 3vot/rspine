@@ -279,7 +279,7 @@ Model.SalesforceAjax =
     return if options.ajax is false
     record.ajax()[type](options.ajax, options)
 
-Model.Ajax.Methods =
+Model.SalesforceAjax.Methods =
   extended: ->
     @extend Extend
     @include Include
