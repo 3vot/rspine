@@ -168,7 +168,8 @@ class Collection extends Base
     @model.trigger('ajaxSuccess', null, status, xhr)
 
   failResponse: (xhr, statusText, error) =>
-    RSpine.trigger("platform:login_invalid") if xhr.status==503
+    
+    RSpine.trigger("platform:login_invalid") if xhr.status==503 or error == "Internal Server Error"
   
     @model.trigger('ajaxError', null, xhr, statusText, error)
 
@@ -234,6 +235,7 @@ class Singleton extends Base
 
   failResponse: (options = {}) =>
     (xhr, statusText, error) =>
+      RSpine.trigger("platform:login_invalid") if xhr.status==503 or error == "Internal Server Error"
       @record.trigger('ajaxError', xhr, statusText, error)
       options.error?.apply(@record) # Deprecated
       options.fail?.apply(@record)
