@@ -24,9 +24,13 @@ RSpine.Model.SalesforceModel =
 
         for key, value of @attributes()
           if @constructor.avoidInsertList.indexOf(key) == -1
-            object[key + "__c" ] = @[key] if @constructor.standardFields.indexOf(key) == -1 and key != "id"
-            object[key] = @[key] if key == "Name"
-            object["Id"] = @[key] if key == "id" and includeId
+            if key == "id"
+              object["Id"] = @[key] if includeId
+            else if @constructor.standardFields.indexOf(key) == -1 and (@constructor.standardObject and @constructor.customFields?.indexOf(key) > 0 )
+              object[key + "__c" ] = @[key] 
+            else
+              object[key] = @[key] 
+            
         return object
       
       toJSON: (includeId=false) ->

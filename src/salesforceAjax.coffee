@@ -35,7 +35,7 @@ Ajax =
     path = path.replace /^\/|\/$/g, ""
     # handle relative urls vs those that use a host
     if path.indexOf("../") isnt 0
-      Model.host + "/" + path
+      Model.salesforceHost + "/sobjects/" + path
     else
       path
 
@@ -61,7 +61,6 @@ Ajax =
 
 class Base
   defaults:
-    dataType: 'json'
     processData: false
     xhrFields: {
         withCredentials: true
@@ -113,22 +112,7 @@ class Base
 class Collection extends Base
   constructor: (@model) ->
 
-  find: (id, params, options = {}) ->
-    record = new @model(id: id)
-    @ajaxQueue(
-      params,
-      type: 'GET',
-      url: options.url or Ajax.getURL(record)
-    ).done(@recordsResponse)
-     .fail(@failResponse)
 
-  all: (params, options = {}) ->
-    @ajaxQueue(
-      params,
-      type: 'GET',
-      url: options.url or Ajax.getURL(@model)
-    ).done(@recordsResponse)
-     .fail(@failResponse)
 
   query: (params={} , options={}) ->
    queryString = if options.queryString then options.queryString else @model.getQuery(params,options)
@@ -140,9 +124,11 @@ class Collection extends Base
     .fail(@failResponse)
     .done (records) =>
       @model.trigger "querySuccess"
+      
       @model.refresh(records, options)
 
   api: (params ={}, options={}) ->
+    params.dataType = "json"
     @ajax(
       params,
       type: 'GET',
@@ -153,14 +139,7 @@ class Collection extends Base
        @model.trigger "apiSuccess", results
 
 
-  fetch: (params = {}, options = {}) ->
-    if id = params.id
-      delete params.id
-      @find(id, params, options).done (record) =>
-        @model.refresh(record, options)
-    else
-      @all(params, options).done (records) =>
-        @model.refresh(records, options)
+
 
   # Private
 
@@ -168,8 +147,7 @@ class Collection extends Base
     @model.trigger('ajaxSuccess', null, status, xhr)
 
   failResponse: (xhr, statusText, error) =>
-    
-    RSpine.trigger("platform:login_invalid") if xhr.status==503 or error == "Internal Server Error"
+    RSpine.trigger("platform:login_invalid") if xhr.status==503
   
     @model.trigger('ajaxError', null, xhr, statusText, error)
 
@@ -202,7 +180,7 @@ class Singleton extends Base
         type: 'PUT'
         contentType: 'application/json'
         data: @record.toJSON()
-        url: options.url
+        url: options.url or Ajax.getCollectionURL(@record)
       }, @record
     ).done(@recordResponse(options))
      .fail(@failResponse(options))
@@ -235,14 +213,13 @@ class Singleton extends Base
 
   failResponse: (options = {}) =>
     (xhr, statusText, error) =>
-      RSpine.trigger("platform:login_invalid") if xhr.status==503 or error == "Internal Server Error"
       @record.trigger('ajaxError', xhr, statusText, error)
       options.error?.apply(@record) # Deprecated
       options.fail?.apply(@record)
 
 # Ajax endpoint
 Model.host = ''
-Model.salesforceHost = ''
+Model.salesforceHost = RSpine.apiServer + "/sobjects"
 
 
 Include =
