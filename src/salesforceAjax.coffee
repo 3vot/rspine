@@ -60,13 +60,16 @@ Ajax =
     @queue []
 
 class Base
+  headers= {'X-Requested-With': 'XMLHttpRequest'}
+  headers["salesforceToken"] = RSpine.token if RSpine.token
+  
   defaults:
     processData: false
     xhrFields: {
         withCredentials: true
     },
     crossDomain: true
-    headers: {'X-Requested-With': 'XMLHttpRequest'}
+    headers: headers
 
   queue: Ajax.queue
 
