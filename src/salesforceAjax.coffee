@@ -61,8 +61,9 @@ Ajax =
 
 class Base
   headers= {'X-Requested-With': 'XMLHttpRequest'}
-  headers["salesforceToken"] = RSpine.token if RSpine.token
-  
+  headers["Authorization"] = RSpine.token if RSpine.token
+  console.log headers
+
   defaults:
     processData: false
     xhrFields: {
@@ -248,7 +249,6 @@ Model.SalesforceAjax =
     @api= =>
       @ajax().api(arguments...)
 
-    @change @ajaxChange
     @extend Extend
     @include Include
 
@@ -257,9 +257,15 @@ Model.SalesforceAjax =
   ajaxFetch: ->
     @ajax().fetch(arguments...)
 
+Model.SalesforceAjax.Auto =
+  extended: ->
+    @change @ajaxChange
+
+  # Private
   ajaxChange: (record, type, options = {}) ->
     return if options.ajax is false
     record.ajax()[type](options.ajax, options)
+
 
 Model.SalesforceAjax.Methods =
   extended: ->
