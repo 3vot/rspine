@@ -35,7 +35,7 @@ Ajax =
     path = path.replace /^\/|\/$/g, ""
     # handle relative urls vs those that use a host
     if path.indexOf("../") isnt 0
-      Model.salesforceHost + "/sobjects/" + path
+      Model.host + "/" + path
     else
       path
 
@@ -60,16 +60,10 @@ Ajax =
     @queue []
 
 class Base
-  headers= {'X-Requested-With': 'XMLHttpRequest'}
-  headers["Authorization"] = RSpine.token if RSpine.token
-
   defaults:
+    dataType: 'json'
     processData: false
-    xhrFields: {
-        withCredentials: true
-    },
-    crossDomain: true
-    headers: headers
+    headers: {'X-Requested-With': 'XMLHttpRequest'}
 
   queue: Ajax.queue
 
@@ -90,7 +84,7 @@ class Base
         settings.url ?= Ajax.getURL(record)
         settings.data?.id = record.id
 
-      settings.data = JSON.stringify(settings.data)
+      settings.data = JSON.stringify(settings.data) if settings.jsonify != false
       jqXHR = $.ajax(settings)
                 .done(deferred.resolve)
                 .fail(deferred.reject)
@@ -115,34 +109,46 @@ class Base
 class Collection extends Base
   constructor: (@model) ->
 
-
-
-  query: (params={} , options={}) ->
-   queryString = if options.queryString then options.queryString else @model.getQuery(params,options)
-   @ajax(
-     params,
-     type: 'GET',
-     url:  Model.salesforceHost  + "/sobjects?soql=#{queryString}"
-   ).done(@recordsResponse)
-    .fail(@failResponse)
-    .done (records) =>
-      @model.trigger "querySuccess"
-      
-      @model.refresh(records, options)
-
-  api: (params ={}, options={}) ->
-    params.dataType = "json"
-    @ajax(
-      params,
-      type: 'GET',
-      url:  Model.salesforceHost + "/api?path=" + options.endpoint
+  custom: (params ={}, options={}) ->
+    $.ajax(
+      type: options.method
+      processData: false
+      dataType: "json"
+      contentType: "application/json"
+      url: options.url || Ajax.getURL(this.model)
+      data: params
     ).done(@recordsResponse)
      .fail(@failResponse)
      .done (results) =>
-       @model.trigger "apiSuccess", results
+       @model.trigger "customSuccess", results
 
+  find: (id, params, options = {}) ->
+    record = new @model(id: id)
+    @ajaxQueue(
+      params,
+      type: 'GET',
+      url: options.url or Ajax.getURL(record)
+    ).done(@recordsResponse)
+     .fail(@failResponse)
 
+  all: (params, options = {}) ->
+    filter = if params != {} then where: JSON.stringify( params )
+    @ajaxQueue(
+      type: 'GET',
+      data: $.param(filter)
+      url: options.url or Ajax.getURL(@model)
+      jsonify: false,
+    ).done(@recordsResponse)
+     .fail(@failResponse)
 
+  fetch: (params = {}, options = {}) ->
+    if id = params.id
+      delete params.id
+      @find(id, params, options).done (record) =>
+        @model.refresh(record, options)
+    else
+      @all(params, options).done (records) =>
+        @model.refresh(records, options)
 
   # Private
 
@@ -150,8 +156,6 @@ class Collection extends Base
     @model.trigger('ajaxSuccess', null, status, xhr)
 
   failResponse: (xhr, statusText, error) =>
-    RSpine.trigger("platform:login_invalid") if xhr.status==503
-  
     @model.trigger('ajaxError', null, xhr, statusText, error)
 
 class Singleton extends Base
@@ -183,7 +187,7 @@ class Singleton extends Base
         type: 'PUT'
         contentType: 'application/json'
         data: @record.toJSON()
-        url: options.url or Ajax.getCollectionURL(@record)
+        url: options.url
       }, @record
     ).done(@recordResponse(options))
      .fail(@failResponse(options))
@@ -205,8 +209,8 @@ class Singleton extends Base
       Ajax.disable =>
         unless RSpine.isBlank(data) or @record.destroyed
           # ID change, need to do some shifting
-          if data.id and @record.id isnt data.id
-            @record.changeID(data.id)
+          if data.objectId and @record.id isnt data.objectId
+            @record.changeID(data.objectId)
           # Update with latest data
           @record.refresh(data)
 
@@ -221,9 +225,7 @@ class Singleton extends Base
       options.fail?.apply(@record)
 
 # Ajax endpoint
-Model.host = ''
-Model.salesforceHost = RSpine.apiServer + "/sobjects"
-
+Model.host = 'https://api.parse.com/1/classes'
 
 Include =
   ajax: -> new Singleton(this)
@@ -238,15 +240,12 @@ Extend =
   url: (args...) ->
     Ajax.generateURL(@, args...)
 
-Model.SalesforceAjax =
+Model.ParseAjax =
   extended: ->
     @fetch @ajaxFetch
 
-    @query= =>
-      @ajax().query(arguments...)
-
-    @api= =>
-      @ajax().api(arguments...)
+    @custom= =>
+      @ajax().custom(arguments...)
 
     @extend Extend
     @include Include
@@ -256,17 +255,17 @@ Model.SalesforceAjax =
   ajaxFetch: ->
     @ajax().fetch(arguments...)
 
-Model.SalesforceAjax.Auto =
+Model.ParseAjax.Auto =
   extended: ->
     @change @ajaxChange
 
   # Private
+
   ajaxChange: (record, type, options = {}) ->
     return if options.ajax is false
     record.ajax()[type](options.ajax, options)
 
-
-Model.SalesforceAjax.Methods =
+Model.ParseAjax.Methods =
   extended: ->
     @extend Extend
     @include Include
@@ -276,5 +275,5 @@ Ajax.defaults   = Base::defaults
 Ajax.Base       = Base
 Ajax.Singleton  = Singleton
 Ajax.Collection = Collection
-RSpine.SalesforceAjax = Ajax
+RSpine.ParseAjax      = Ajax
 module?.exports = Ajax

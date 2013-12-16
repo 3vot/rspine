@@ -61,9 +61,7 @@ RSpine.Model.SalesforceModel =
       fromJSON: (objects) ->
         return unless objects
 
-        if typeof objects is 'string'
-          objects = objects.replace(new RegExp("Id", 'g'),"id")
-          objects = JSON.parse(objects)
+        objects = JSON.parse(objects) if typeof objects is 'string'
         objects = objects.records if objects.records
 
         if RSpine.isArray(objects)
